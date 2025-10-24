@@ -1,14 +1,26 @@
 // screens/DashboardScreen.tsx
-// Dashboard con statistiche collezione
+// Aggiornato per usare dati dal Context invece di dati statici
 
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import Colors from '../constants/Colors';
 import Logo from '../components/Logo';
 import StatCard from '../components/StatCard';
-import { wines, getWineStats } from '../data/wines';
+import { useWines } from '../contexts/WineContext';
+import { getWineStats } from '../data/wines';
 
 export default function DashboardScreen() {
+  const { wines, loading } = useWines();
+  
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+        <Text style={styles.loadingText}>Caricamento statistiche...</Text>
+      </View>
+    );
+  }
+
   const stats = getWineStats(wines);
 
   // Tipo di vino tradotto in italiano
@@ -41,84 +53,93 @@ export default function DashboardScreen() {
           </Text>
         </View>
 
-        {/* Statistiche principali */}
-        <View style={styles.statsContainer}>
-          <StatCard
-            title="Totale Vini"
-            value={stats.totalWines}
-            subtitle="Nella tua collezione"
-            icon="wine-bar"
-          />
+        {wines.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateText}>Nessun dato disponibile</Text>
+            <Text style={styles.emptyStateSubtext}>Aggiungi vini per vedere le statistiche</Text>
+          </View>
+        ) : (
+          <>
+            {/* Statistiche principali */}
+            <View style={styles.statsContainer}>
+              <StatCard
+                title="Totale Vini"
+                value={stats.totalWines}
+                subtitle="Nella tua collezione"
+                icon="wine-bar"
+              />
 
-          <StatCard
-            title="Valutazione Media"
-            value={`${stats.avgRating}/10`}
-            subtitle="Su 10 punti"
-            icon="star"
-          />
+              <StatCard
+                title="Valutazione Media"
+                value={`${stats.avgRating}/10`}
+                subtitle="Su 10 punti"
+                icon="star"
+              />
 
-          <StatCard
-            title="Tipo Più Comune"
-            value={typeLabels[stats.mostCommonType]}
-            subtitle={`${stats.typeCount[stats.mostCommonType]} bottiglie in collezione`}
-            icon="local-bar"
-          />
-        </View>
+              <StatCard
+                title="Tipo Più Comune"
+                value={typeLabels[stats.mostCommonType]}
+                subtitle={`${stats.typeCount[stats.mostCommonType]} bottiglie in collezione`}
+                icon="local-bar"
+              />
+            </View>
 
-        {/* Distribuzione per tipo */}
-        <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Distribuzione per Tipo</Text>
-          
-{Object.entries(stats.typeCount).map(([type, count]) => {
-  const percentage = (count / stats.totalWines) * 100; // Numero, non stringa
-  return (
-    <View key={type} style={styles.distributionItem}>
-      <View style={styles.distributionHeader}>
-        <Text style={styles.distributionLabel}>
-          {typeLabels[type]}
-        </Text>
-        <Text style={styles.distributionValue}>
-          {count} ({percentage.toFixed(0)}%)
-        </Text>
-      </View>
-      <View style={styles.progressBar}>
-        <View 
-          style={[
-            styles.progressFill, 
-            { width: `${percentage}%` }  // ✅ Ora percentage è un numero
-          ]} 
-        />
-      </View>
-    </View>
-  );
-})}
-        </View>
+            {/* Distribuzione per tipo */}
+            <View style={styles.sectionContainer}>
+              <Text style={styles.sectionTitle}>Distribuzione per Tipo</Text>
+              
+              {Object.entries(stats.typeCount).map(([type, count]) => {
+                const percentage = (count / stats.totalWines) * 100;
+                return (
+                  <View key={type} style={styles.distributionItem}>
+                    <View style={styles.distributionHeader}>
+                      <Text style={styles.distributionLabel}>
+                        {typeLabels[type]}
+                      </Text>
+                      <Text style={styles.distributionValue}>
+                        {count} ({percentage.toFixed(0)}%)
+                      </Text>
+                    </View>
+                    <View style={styles.progressBar}>
+                      <View 
+                        style={[
+                          styles.progressFill, 
+                          { width: `${Math.round(percentage)}%` }
+                        ]} 
+                      />
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
 
-        {/* Migliori vini */}
-        <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Vini Meglio Valutati</Text>
-          
-          {wines
-            .sort((a, b) => b.rating - a.rating)
-            .slice(0, 3)
-            .map((wine, index) => (
-              <View key={wine.id} style={styles.topWineItem}>
-                <View style={styles.topWineRank}>
-                  <Text style={styles.topWineRankText}>{index + 1}</Text>
-                </View>
-                <View style={styles.topWineInfo}>
-                  <Text style={styles.topWineName}>{wine.name}</Text>
-                  <Text style={styles.topWineDetails}>
-                    {wine.region} • {wine.year}
-                  </Text>
-                </View>
-                <View style={styles.topWineRating}>
-                  <Text style={styles.topWineRatingText}>{wine.rating}</Text>
-                  <Text style={styles.topWineRatingLabel}>/10</Text>
-                </View>
-              </View>
-            ))}
-        </View>
+            {/* Migliori vini */}
+            <View style={styles.sectionContainer}>
+              <Text style={styles.sectionTitle}>Vini Meglio Valutati</Text>
+              
+              {wines
+                .sort((a, b) => b.rating - a.rating)
+                .slice(0, 3)
+                .map((wine, index) => (
+                  <View key={wine.id} style={styles.topWineItem}>
+                    <View style={styles.topWineRank}>
+                      <Text style={styles.topWineRankText}>{index + 1}</Text>
+                    </View>
+                    <View style={styles.topWineInfo}>
+                      <Text style={styles.topWineName}>{wine.name}</Text>
+                      <Text style={styles.topWineDetails}>
+                        {wine.region} • {wine.year}
+                      </Text>
+                    </View>
+                    <View style={styles.topWineRating}>
+                      <Text style={styles.topWineRatingText}>{wine.rating}</Text>
+                      <Text style={styles.topWineRatingLabel}>/10</Text>
+                    </View>
+                  </View>
+                ))}
+            </View>
+          </>
+        )}
       </ScrollView>
     </View>
   );
@@ -128,6 +149,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
+  },
+  centered: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 14,
+    color: Colors.textSecondary,
   },
   header: {
     paddingTop: 50,
@@ -158,6 +188,20 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 14,
     color: Colors.textSecondary,
+  },
+  emptyState: {
+    alignItems: 'center',
+    padding: 40,
+  },
+  emptyStateText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.textSecondary,
+    marginBottom: 8,
+  },
+  emptyStateSubtext: {
+    fontSize: 14,
+    color: Colors.textMuted,
   },
   statsContainer: {
     paddingHorizontal: 20,
