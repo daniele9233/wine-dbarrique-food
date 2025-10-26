@@ -1,5 +1,5 @@
 // screens/CollectionScreen.tsx
-// Schermata collezione vini - identica al design GitHub
+// Aggiornato per usare Context e navigare a dettagli/aggiungi
 
 import React, { useState } from 'react';
 import { 
@@ -9,15 +9,16 @@ import {
   ScrollView, 
   TextInput,
   TouchableOpacity,
-  Alert 
+  ActivityIndicator,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import Colors from '../constants/Colors';
 import WineCard from '../components/WineCard';
-import { wines } from '../data/wines';
+import { useWines } from '../contexts/WineContext';
 import Logo from '../components/Logo';
 
-export default function CollectionScreen() {
+export default function CollectionScreen({ navigation }: any) {
+  const { wines, loading } = useWines();
   const [searchQuery, setSearchQuery] = useState('');
   
   // Filtra vini in base alla ricerca
@@ -28,19 +29,11 @@ export default function CollectionScreen() {
   );
 
   const handleAddWine = () => {
-    Alert.alert(
-      'Aggiungi Vino',
-      'Funzionalità in sviluppo! Qui potrai aggiungere nuovi vini alla tua collezione.',
-      [{ text: 'OK' }]
-    );
+    navigation.navigate('AddWine');
   };
 
   const handleWinePress = (wineId: string) => {
-    Alert.alert(
-      'Dettagli Vino',
-      'Funzionalità in sviluppo! Qui vedrai i dettagli completi del vino.',
-      [{ text: 'OK' }]
-    );
+    navigation.navigate('WineDetail', { wineId });
   };
 
   return (
@@ -100,28 +93,43 @@ export default function CollectionScreen() {
           </View>
         </View>
 
-        {/* Lista vini */}
-        <View style={styles.winesList}>
-          {filteredWines.length > 0 ? (
-            filteredWines.map((wine) => (
-              <WineCard 
-                key={wine.id} 
-                wine={wine}
-                onPress={() => handleWinePress(wine.id)}
-              />
-            ))
-          ) : (
-            <View style={styles.emptyState}>
-              <MaterialIcons name="wine-bar" size={64} color={Colors.textMuted} />
-              <Text style={styles.emptyStateText}>
-                Nessun vino trovato
-              </Text>
-              <Text style={styles.emptyStateSubtext}>
-                Prova a modificare i filtri di ricerca
-              </Text>
-            </View>
-          )}
-        </View>
+        {/* Loading o lista vini */}
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={Colors.primary} />
+            <Text style={styles.loadingText}>Caricamento collezione...</Text>
+          </View>
+        ) : (
+          <View style={styles.winesList}>
+            {filteredWines.length > 0 ? (
+              filteredWines.map((wine) => (
+                <WineCard 
+                  key={wine.id} 
+                  wine={wine}
+                  onPress={() => handleWinePress(wine.id)}
+                />
+              ))
+            ) : (
+              <View style={styles.emptyState}>
+                <MaterialIcons name="wine-bar" size={64} color={Colors.textMuted} />
+                <Text style={styles.emptyStateText}>
+                  {searchQuery ? 'Nessun vino trovato' : 'Nessun vino in collezione'}
+                </Text>
+                <Text style={styles.emptyStateSubtext}>
+                  {searchQuery 
+                    ? 'Prova a modificare i filtri di ricerca' 
+                    : 'Aggiungi il tuo primo vino alla collezione'}
+                </Text>
+                {!searchQuery && (
+                  <TouchableOpacity style={styles.emptyStateButton} onPress={handleAddWine}>
+                    <MaterialIcons name="add" size={20} color={Colors.text} />
+                    <Text style={styles.emptyStateButtonText}>Aggiungi Vino</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            )}
+          </View>
+        )}
       </ScrollView>
     </View>
   );
@@ -220,6 +228,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 14,
+    color: Colors.textSecondary,
+  },
   winesList: {
     paddingHorizontal: 20,
   },
@@ -238,5 +256,21 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.textMuted,
     marginTop: 8,
+    textAlign: 'center',
+  },
+  emptyStateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 20,
+    marginTop: 20,
+    gap: 8,
+  },
+  emptyStateButtonText: {
+    color: Colors.text,
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
