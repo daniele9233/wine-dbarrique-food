@@ -1,5 +1,5 @@
 // screens/AddWineScreen.tsx
-// FIX DEFINITIVO - Keyboard handling con KeyboardAwareScrollView
+// Schermata per aggiungere un nuovo vino
 
 import React, { useState } from 'react';
 import {
@@ -10,10 +10,12 @@ import {
   TouchableOpacity,
   Alert,
   Keyboard,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import Colors from '../constants/Colors';
 import { useWines } from '../contexts/WineContext';
 import { Wine } from '../data/wines';
@@ -43,14 +45,12 @@ export default function AddWineScreen({ navigation }: any) {
   ];
 
   const handleImageSelected = async (uri: string) => {
-    // Chiudi tastiera prima di aprire image picker
     Keyboard.dismiss();
     await new Promise(resolve => setTimeout(resolve, 100));
     setImageUri(uri);
   };
 
   const handleSave = async () => {
-    // Validazione
     if (!name.trim()) {
       Alert.alert('Errore', 'Il nome del vino è obbligatorio');
       return;
@@ -106,133 +106,137 @@ export default function AddWineScreen({ navigation }: any) {
         <View style={{ width: 40 }} />
       </View>
 
-      <KeyboardAwareScrollView
-        style={styles.scrollView}
-        contentContainerStyle={[
-          styles.contentContainer,
-          {
-            paddingTop: 20,
-            paddingBottom: insets.bottom + 20,
-          }
-        ]}
-        bottomOffset={40}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
-        {/* Upload immagine */}
-        <ImagePickerComponent imageUri={imageUri} onImageSelected={handleImageSelected} />
-
-        {/* Nome */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Nome Vino *</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Es. Barolo Cannubi"
-            placeholderTextColor={Colors.textMuted}
-            value={name}
-            onChangeText={setName}
-          />
-        </View>
-
-        {/* Produttore */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Produttore</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Es. Marchesi di Barolo"
-            placeholderTextColor={Colors.textMuted}
-            value={producer}
-            onChangeText={setProducer}
-          />
-        </View>
-
-        {/* Regione e Anno */}
-        <View style={styles.row}>
-          <View style={[styles.inputGroup, styles.flex1]}>
-            <Text style={styles.label}>Regione *</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Es. Piemonte"
-              placeholderTextColor={Colors.textMuted}
-              value={region}
-              onChangeText={setRegion}
-            />
-          </View>
-          <View style={[styles.inputGroup, styles.yearInput]}>
-            <Text style={styles.label}>Anno *</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="2020"
-              placeholderTextColor={Colors.textMuted}
-              value={year}
-              onChangeText={setYear}
-              keyboardType="numeric"
-              maxLength={4}
-            />
-          </View>
-        </View>
-
-        {/* Tipo vino */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Tipo Vino</Text>
-          <View style={styles.typeContainer}>
-            {wineTypes.map((wineType) => (
-              <TouchableOpacity
-                key={wineType.key}
-                style={[styles.typeButton, type === wineType.key && styles.typeButtonActive]}
-                onPress={() => setType(wineType.key)}
-              >
-                <Text
-                  style={[styles.typeButtonText, type === wineType.key && styles.typeButtonTextActive]}
-                >
-                  {wineType.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {/* Rating */}
-        <RatingInput initialRating={rating} onRatingChange={setRating} />
-
-        {/* Vitigni */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Vitigni (separati da virgola)</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Es. Nebbiolo, Barbera"
-            placeholderTextColor={Colors.textMuted}
-            value={grapes}
-            onChangeText={setGrapes}
-          />
-        </View>
-
-        {/* Note */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Note di Degustazione</Text>
-          <TextInput
-            style={[styles.input, styles.textArea]}
-            placeholder="Descrivi il vino, aromi, sapori, abbinamenti..."
-            placeholderTextColor={Colors.textMuted}
-            value={notes}
-            onChangeText={setNotes}
-            multiline
-            numberOfLines={6}
-            textAlignVertical="top"
-            scrollEnabled={false}
-          />
-        </View>
-
-        {/* Pulsante salva */}
-        <TouchableOpacity
-          style={[styles.saveButton, saving && styles.saveButtonDisabled]}
-          onPress={handleSave}
-          disabled={saving}
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={[
+            styles.contentContainer,
+            {
+              paddingTop: 20,
+              paddingBottom: insets.bottom + 100,
+            }
+          ]}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
-          <MaterialIcons name="save" size={20} color={Colors.text} />
-          <Text style={styles.saveButtonText}>{saving ? 'Salvataggio...' : 'Salva Vino'}</Text>
-        </TouchableOpacity>
-      </KeyboardAwareScrollView>
+          {/* Upload immagine */}
+          <ImagePickerComponent imageUri={imageUri} onImageSelected={handleImageSelected} />
+
+          {/* Nome */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Nome Vino *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Es. Barolo Cannubi"
+              placeholderTextColor={Colors.textMuted}
+              value={name}
+              onChangeText={setName}
+            />
+          </View>
+
+          {/* Produttore */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Produttore</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Es. Marchesi di Barolo"
+              placeholderTextColor={Colors.textMuted}
+              value={producer}
+              onChangeText={setProducer}
+            />
+          </View>
+
+          {/* Regione e Anno */}
+          <View style={styles.row}>
+            <View style={[styles.inputGroup, styles.flex1]}>
+              <Text style={styles.label}>Regione *</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Es. Piemonte"
+                placeholderTextColor={Colors.textMuted}
+                value={region}
+                onChangeText={setRegion}
+              />
+            </View>
+            <View style={[styles.inputGroup, styles.yearInput]}>
+              <Text style={styles.label}>Anno *</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="2020"
+                placeholderTextColor={Colors.textMuted}
+                value={year}
+                onChangeText={setYear}
+                keyboardType="numeric"
+                maxLength={4}
+              />
+            </View>
+          </View>
+
+          {/* Tipo vino */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Tipo Vino</Text>
+            <View style={styles.typeContainer}>
+              {wineTypes.map((wineType) => (
+                <TouchableOpacity
+                  key={wineType.key}
+                  style={[styles.typeButton, type === wineType.key && styles.typeButtonActive]}
+                  onPress={() => setType(wineType.key)}
+                >
+                  <Text
+                    style={[styles.typeButtonText, type === wineType.key && styles.typeButtonTextActive]}
+                  >
+                    {wineType.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          {/* Rating */}
+          <RatingInput initialRating={rating} onRatingChange={setRating} />
+
+          {/* Vitigni */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Vitigni (separati da virgola)</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Es. Nebbiolo, Barbera"
+              placeholderTextColor={Colors.textMuted}
+              value={grapes}
+              onChangeText={setGrapes}
+            />
+          </View>
+
+          {/* Note */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Note di Degustazione</Text>
+            <TextInput
+              style={[styles.input, styles.textArea]}
+              placeholder="Descrivi il vino, aromi, sapori, abbinamenti..."
+              placeholderTextColor={Colors.textMuted}
+              value={notes}
+              onChangeText={setNotes}
+              multiline
+              numberOfLines={6}
+              textAlignVertical="top"
+            />
+          </View>
+
+          {/* Pulsante salva */}
+          <TouchableOpacity
+            style={[styles.saveButton, saving && styles.saveButtonDisabled]}
+            onPress={handleSave}
+            disabled={saving}
+          >
+            <MaterialIcons name="save" size={20} color={Colors.text} />
+            <Text style={styles.saveButtonText}>{saving ? 'Salvataggio...' : 'Salva Vino'}</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </View>
   );
 }
@@ -289,7 +293,6 @@ const styles = StyleSheet.create({
   },
   textArea: {
     minHeight: 120,
-    maxHeight: 200,
     paddingTop: 16,
   },
   row: {

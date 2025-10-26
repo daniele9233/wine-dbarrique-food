@@ -1,5 +1,5 @@
 // screens/WineDetailScreen.tsx
-// FIX DEFINITIVO - Keyboard handling con KeyboardAwareScrollView
+// Schermata dettagli vino con modalità visualizzazione e modifica
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -11,10 +11,12 @@ import {
   Alert,
   Image,
   Keyboard,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import Colors from '../constants/Colors';
 import { useWines } from '../contexts/WineContext';
 import { Wine } from '../data/wines';
@@ -31,7 +33,6 @@ export default function WineDetailScreen({ route, navigation }: any) {
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // Campi editabili
   const [name, setName] = useState('');
   const [producer, setProducer] = useState('');
   const [region, setRegion] = useState('');
@@ -50,7 +51,6 @@ export default function WineDetailScreen({ route, navigation }: any) {
     const loadedWine = getWineById(wineId);
     if (loadedWine) {
       setWine(loadedWine);
-      // Popola campi per editing
       setName(loadedWine.name);
       setProducer(loadedWine.producer || '');
       setRegion(loadedWine.region);
@@ -148,7 +148,6 @@ export default function WineDetailScreen({ route, navigation }: any) {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <MaterialIcons name="arrow-back" size={24} color={Colors.text} />
@@ -167,202 +166,204 @@ export default function WineDetailScreen({ route, navigation }: any) {
         )}
       </View>
 
-      <KeyboardAwareScrollView
-        style={styles.scrollView}
-        contentContainerStyle={[
-          styles.contentContainer,
-          {
-            paddingTop: 20,
-            paddingBottom: insets.bottom + 20,
-          }
-        ]}
-        bottomOffset={40}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
-        {isEditing ? (
-          // MODALITÀ EDITING
-          <>
-            <ImagePickerComponent imageUri={imageUri} onImageSelected={handleImageSelected} />
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={[
+            styles.contentContainer,
+            {
+              paddingTop: 20,
+              paddingBottom: insets.bottom + 100,
+            }
+          ]}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          {isEditing ? (
+            <>
+              <ImagePickerComponent imageUri={imageUri} onImageSelected={handleImageSelected} />
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Nome Vino *</Text>
-              <TextInput
-                style={styles.input}
-                value={name}
-                onChangeText={setName}
-                placeholder="Nome del vino"
-                placeholderTextColor={Colors.textMuted}
-              />
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Produttore</Text>
-              <TextInput
-                style={styles.input}
-                value={producer}
-                onChangeText={setProducer}
-                placeholder="Nome produttore"
-                placeholderTextColor={Colors.textMuted}
-              />
-            </View>
-
-            <View style={styles.row}>
-              <View style={[styles.inputGroup, styles.flex1]}>
-                <Text style={styles.label}>Regione *</Text>
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Nome Vino *</Text>
                 <TextInput
                   style={styles.input}
-                  value={region}
-                  onChangeText={setRegion}
-                  placeholder="Regione"
+                  value={name}
+                  onChangeText={setName}
+                  placeholder="Nome del vino"
                   placeholderTextColor={Colors.textMuted}
                 />
               </View>
-              <View style={[styles.inputGroup, styles.yearInput]}>
-                <Text style={styles.label}>Anno *</Text>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Produttore</Text>
                 <TextInput
                   style={styles.input}
-                  value={year}
-                  onChangeText={setYear}
-                  placeholder="Anno"
+                  value={producer}
+                  onChangeText={setProducer}
+                  placeholder="Nome produttore"
                   placeholderTextColor={Colors.textMuted}
-                  keyboardType="numeric"
-                  maxLength={4}
                 />
               </View>
-            </View>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Tipo Vino</Text>
-              <View style={styles.typeContainer}>
-                {wineTypes.map((wineType) => (
-                  <TouchableOpacity
-                    key={wineType.key}
-                    style={[styles.typeButton, type === wineType.key && styles.typeButtonActive]}
-                    onPress={() => setType(wineType.key)}
-                  >
-                    <Text
-                      style={[
-                        styles.typeButtonText,
-                        type === wineType.key && styles.typeButtonTextActive,
-                      ]}
+              <View style={styles.row}>
+                <View style={[styles.inputGroup, styles.flex1]}>
+                  <Text style={styles.label}>Regione *</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={region}
+                    onChangeText={setRegion}
+                    placeholder="Regione"
+                    placeholderTextColor={Colors.textMuted}
+                  />
+                </View>
+                <View style={[styles.inputGroup, styles.yearInput]}>
+                  <Text style={styles.label}>Anno *</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={year}
+                    onChangeText={setYear}
+                    placeholder="Anno"
+                    placeholderTextColor={Colors.textMuted}
+                    keyboardType="numeric"
+                    maxLength={4}
+                  />
+                </View>
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Tipo Vino</Text>
+                <View style={styles.typeContainer}>
+                  {wineTypes.map((wineType) => (
+                    <TouchableOpacity
+                      key={wineType.key}
+                      style={[styles.typeButton, type === wineType.key && styles.typeButtonActive]}
+                      onPress={() => setType(wineType.key)}
                     >
-                      {wineType.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+                      <Text
+                        style={[
+                          styles.typeButtonText,
+                          type === wineType.key && styles.typeButtonTextActive,
+                        ]}
+                      >
+                        {wineType.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
               </View>
-            </View>
 
-            <RatingInput initialRating={rating} onRatingChange={setRating} />
+              <RatingInput initialRating={rating} onRatingChange={setRating} />
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Vitigni (separati da virgola)</Text>
-              <TextInput
-                style={styles.input}
-                value={grapes}
-                onChangeText={setGrapes}
-                placeholder="Es. Nebbiolo, Barbera"
-                placeholderTextColor={Colors.textMuted}
-              />
-            </View>
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Vitigni (separati da virgola)</Text>
+                <TextInput
+                  style={styles.input}
+                  value={grapes}
+                  onChangeText={setGrapes}
+                  placeholder="Es. Nebbiolo, Barbera"
+                  placeholderTextColor={Colors.textMuted}
+                />
+              </View>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Note di Degustazione</Text>
-              <TextInput
-                style={[styles.input, styles.textArea]}
-                value={notes}
-                onChangeText={setNotes}
-                placeholder="Note, aromi, sapori..."
-                placeholderTextColor={Colors.textMuted}
-                multiline
-                numberOfLines={6}
-                textAlignVertical="top"
-                scrollEnabled={false}
-              />
-            </View>
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Note di Degustazione</Text>
+                <TextInput
+                  style={[styles.input, styles.textArea]}
+                  value={notes}
+                  onChangeText={setNotes}
+                  placeholder="Note, aromi, sapori..."
+                  placeholderTextColor={Colors.textMuted}
+                  multiline
+                  numberOfLines={6}
+                  textAlignVertical="top"
+                />
+              </View>
 
-            <TouchableOpacity
-              style={[styles.saveButton, saving && styles.saveButtonDisabled]}
-              onPress={handleSave}
-              disabled={saving}
-            >
-              <MaterialIcons name="save" size={20} color={Colors.text} />
-              <Text style={styles.saveButtonText}>
-                {saving ? 'Salvataggio...' : 'Salva Modifiche'}
-              </Text>
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.saveButton, saving && styles.saveButtonDisabled]}
+                onPress={handleSave}
+                disabled={saving}
+              >
+                <MaterialIcons name="save" size={20} color={Colors.text} />
+                <Text style={styles.saveButtonText}>
+                  {saving ? 'Salvataggio...' : 'Salva Modifiche'}
+                </Text>
+              </TouchableOpacity>
 
-            <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
-              <MaterialIcons name="delete" size={20} color={Colors.text} />
-              <Text style={styles.deleteButtonText}>Elimina Vino</Text>
-            </TouchableOpacity>
-          </>
-        ) : (
-          // MODALITÀ VISUALIZZAZIONE
-          <>
-            {wine.image && (
-              <Image source={{ uri: wine.image }} style={styles.wineImage} />
-            )}
-
-            <View style={styles.infoCard}>
-              <Text style={styles.wineName}>{wine.name}</Text>
-              {wine.producer && (
-                <Text style={styles.wineProducer}>{wine.producer}</Text>
+              <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
+                <MaterialIcons name="delete" size={20} color={Colors.text} />
+                <Text style={styles.deleteButtonText}>Elimina Vino</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <>
+              {wine.image && (
+                <Image source={{ uri: wine.image }} style={styles.wineImage} />
               )}
-              
-              <View style={styles.ratingContainer}>
-                <RatingStars rating={wine.rating} size={20} />
-              </View>
 
-              <View style={styles.detailsGrid}>
-                <View style={styles.detailItem}>
-                  <MaterialIcons name="place" size={20} color={Colors.primary} />
-                  <View style={styles.detailTextContainer}>
-                    <Text style={styles.detailLabel}>Regione</Text>
-                    <Text style={styles.detailValue}>{wine.region}</Text>
-                  </View>
+              <View style={styles.infoCard}>
+                <Text style={styles.wineName}>{wine.name}</Text>
+                {wine.producer && (
+                  <Text style={styles.wineProducer}>{wine.producer}</Text>
+                )}
+                
+                <View style={styles.ratingContainer}>
+                  <RatingStars rating={wine.rating} size={20} />
                 </View>
 
-                <View style={styles.detailItem}>
-                  <MaterialIcons name="calendar-today" size={20} color={Colors.primary} />
-                  <View style={styles.detailTextContainer}>
-                    <Text style={styles.detailLabel}>Anno</Text>
-                    <Text style={styles.detailValue}>{wine.year}</Text>
-                  </View>
-                </View>
-
-                <View style={styles.detailItem}>
-                  <MaterialIcons name="wine-bar" size={20} color={Colors.primary} />
-                  <View style={styles.detailTextContainer}>
-                    <Text style={styles.detailLabel}>Tipo</Text>
-                    <Text style={styles.detailValue}>
-                      {wineTypes.find(t => t.key === wine.type)?.label}
-                    </Text>
-                  </View>
-                </View>
-
-                {wine.grapes && wine.grapes.length > 0 && (
+                <View style={styles.detailsGrid}>
                   <View style={styles.detailItem}>
-                    <MaterialIcons name="eco" size={20} color={Colors.primary} />
+                    <MaterialIcons name="place" size={20} color={Colors.primary} />
                     <View style={styles.detailTextContainer}>
-                      <Text style={styles.detailLabel}>Vitigni</Text>
-                      <Text style={styles.detailValue}>{wine.grapes.join(', ')}</Text>
+                      <Text style={styles.detailLabel}>Regione</Text>
+                      <Text style={styles.detailValue}>{wine.region}</Text>
                     </View>
                   </View>
-                )}
-              </View>
-            </View>
 
-            {wine.notes && (
-              <View style={styles.notesCard}>
-                <Text style={styles.notesTitle}>Note di Degustazione</Text>
-                <Text style={styles.notesText}>{wine.notes}</Text>
+                  <View style={styles.detailItem}>
+                    <MaterialIcons name="calendar-today" size={20} color={Colors.primary} />
+                    <View style={styles.detailTextContainer}>
+                      <Text style={styles.detailLabel}>Anno</Text>
+                      <Text style={styles.detailValue}>{wine.year}</Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.detailItem}>
+                    <MaterialIcons name="wine-bar" size={20} color={Colors.primary} />
+                    <View style={styles.detailTextContainer}>
+                      <Text style={styles.detailLabel}>Tipo</Text>
+                      <Text style={styles.detailValue}>
+                        {wineTypes.find(t => t.key === wine.type)?.label}
+                      </Text>
+                    </View>
+                  </View>
+
+                  {wine.grapes && wine.grapes.length > 0 && (
+                    <View style={styles.detailItem}>
+                      <MaterialIcons name="eco" size={20} color={Colors.primary} />
+                      <View style={styles.detailTextContainer}>
+                        <Text style={styles.detailLabel}>Vitigni</Text>
+                        <Text style={styles.detailValue}>{wine.grapes.join(', ')}</Text>
+                      </View>
+                    </View>
+                  )}
+                </View>
               </View>
-            )}
-          </>
-        )}
-      </KeyboardAwareScrollView>
+
+              {wine.notes && (
+                <View style={styles.notesCard}>
+                  <Text style={styles.notesTitle}>Note di Degustazione</Text>
+                  <Text style={styles.notesText}>{wine.notes}</Text>
+                </View>
+              )}
+            </>
+          )}
+        </ScrollView>
+      </KeyboardAvoidingView>
     </View>
   );
 }
@@ -487,7 +488,6 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     lineHeight: 22,
   },
-  // Stili modalità editing
   inputGroup: {
     marginBottom: 20,
   },
@@ -508,7 +508,6 @@ const styles = StyleSheet.create({
   },
   textArea: {
     minHeight: 120,
-    maxHeight: 200,
     paddingTop: 16,
   },
   row: {

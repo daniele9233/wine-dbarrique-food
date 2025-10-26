@@ -1,5 +1,5 @@
 // App.tsx
-// FIX DEFINITIVO - Android keyboard handling
+// Configurazione Android-specific per tab bar
 
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
@@ -9,7 +9,6 @@ import { StatusBar } from 'expo-status-bar';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { KeyboardProvider } from 'react-native-keyboard-controller';
 import Colors from './constants/Colors';
 import { WineProvider } from './contexts/WineContext';
 
@@ -39,24 +38,40 @@ function MainNavigator() {
   return (
     <Tab.Navigator
       screenOptions={{
-        tabBarStyle: {
-          backgroundColor: Colors.background,
-          borderTopColor: Colors.border,
-          borderTopWidth: 1,
-          height: Platform.OS === 'ios' ? 85 : 60,
-          paddingBottom: Platform.OS === 'ios' ? 25 : 8,
-          paddingTop: 8,
-          elevation: 8,
-        },
+        tabBarStyle: Platform.select({
+          ios: {
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            backgroundColor: Colors.background,
+            borderTopColor: Colors.border,
+            borderTopWidth: 1,
+            height: 85,
+            paddingBottom: 25,
+            paddingTop: 8,
+            elevation: 0,
+          },
+          android: {
+            backgroundColor: Colors.background,
+            borderTopColor: Colors.border,
+            borderTopWidth: 1,
+            height: 60,
+            paddingBottom: 6,
+            paddingTop: 6,
+            elevation: 8,
+          },
+        }),
         tabBarActiveTintColor: Colors.primary,
         tabBarInactiveTintColor: Colors.textMuted,
         headerShown: false,
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: '600',
+          marginBottom: 0,
         },
         tabBarIconStyle: {
-          marginTop: 4,
+          marginTop: 2,
         },
         tabBarHideOnKeyboard: Platform.OS === 'android',
       }}
@@ -111,14 +126,12 @@ function MainNavigator() {
 export default function App() {
   return (
     <SafeAreaProvider>
-      <KeyboardProvider>
-        <WineProvider>
-          <StatusBar style="light" />
-          <NavigationContainer>
-            <MainNavigator />
-          </NavigationContainer>
-        </WineProvider>
-      </KeyboardProvider>
+      <WineProvider>
+        <StatusBar style="light" />
+        <NavigationContainer>
+          <MainNavigator />
+        </NavigationContainer>
+      </WineProvider>
     </SafeAreaProvider>
   );
 }
